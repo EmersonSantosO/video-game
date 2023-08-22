@@ -13,6 +13,23 @@ class MyGame(ShowBase):
         self.setupLights()
         self.generateTerrain()
         self.setupCamera()
+        self.setupSkybox()
+        self.captureMouse()
+
+    def setupControls(self):
+        self.accept("escape", self.relaseMouse)
+
+    def captureMouse(self):
+        properties = WindowProperties()
+        properties.setCursorHidden(True)
+        properties.setMouseMode(WindowProperties.M_relative)
+        self.win.requestProperties(properties)
+
+    def relaseMouse(self):
+        properties = WindowProperties()
+        properties.setCursorHidden(False)
+        properties.setMouseMode(WindowProperties.M_absolute)
+        self.win.requestProperties(properties)
 
     def setupCamera(self):
         self.disableMouse()
@@ -24,6 +41,14 @@ class MyGame(ShowBase):
             scale=0.05
         )
         crosshairs.setTransparency(TransparencyAttrib.MAlpha)
+
+    def setupSkybox(self):
+        skybox = loader.loadModel("skybox/skybox.egg")
+        skybox.setScale(500)
+        skybox.setBin("background", 1)
+        skybox.setDepthWrite(0)
+        skybox.setLightOff()
+        skybox.reparentTo(render)
 
     def generateTerrain(self):
         for z in range(10):
