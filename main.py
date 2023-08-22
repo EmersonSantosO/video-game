@@ -1,5 +1,5 @@
 from direct.showbase.ShowBase import ShowBase
-from panda3d.core import loadPrcFile, DirectionalLight, AmbientLight, TransparencyAttrib, WindowProperties, CollisionTraverser, CollisionNode, CollisionBox, CollisionTraverse, CollisionHandlerQueue
+from panda3d.core import loadPrcFile, DirectionalLight, AmbientLight, TransparencyAttrib, WindowProperties, CollisionTraverser, CollisionNode, CollisionBox, CollisionRay, CollisionHandlerQueue
 from direct.gui.OnscreenImage import OnscreenImage
 from math import pi, sin, cos
 loadPrcFile("settings.prc")
@@ -12,6 +12,8 @@ def degToRad(degrees):
 class MyGame(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
+
+        self.selectedBlockType = "grass"
 
         self.loadModels()
         self.setupLights()
@@ -102,6 +104,41 @@ class MyGame(ShowBase):
         self.accept('2', self.setSelectedBlockType, ['dirt'])
         self.accept('3', self.setSelectedBlockType, ['sand'])
         self.accept('4', self.setSelectedBlockType, ['stone'])
+
+    def setSelectedBlockType(self, type):
+        self.selectedBlockType = type
+
+    def handleLeftClick(self):
+        self.captureMouse()
+        self.removeBlock()
+
+    def removeBlock(self):
+        if self.rayQueue.getNumEntries() > 0:
+            self.rayQueue.sortEntries()
+            rayHit = self.rayQueue.getEntry(0)
+
+            hitNodePath = rayHit.getIntoNodePath()
+            hitObject = hitNodePath.getPythonTag('owner')
+            distanceFromPlayer = hitObject.getDistance(self.camera)
+
+            if distanceFromPlayer < 12:
+                hitNodePath.clearPythonTag('owner')
+                hitObject.removeNode()
+
+    def placeBlock(self):
+        if self.rayQueue.getNumEntries() > 0:
+            self.rayQueue.sortEntries()
+            rayHit = self.rayQueue.getEntry(0)
+            hitNodePath = rayHit.getIntoNodePath()
+            normal = rayHit.getSurfaceNormal(hitNodePath)
+            hitObject = hitNodePath.getPythonTag('owner')
+            distanceFromPlayer = hitObject.getDistance(self.camera)
+
+            if distanceFromPlayer < 14:
+                hitBlockPos = hitObject.getPos()
+                newBlockPos = hitBlockPos + normal * 2
+                self.createNewBlock(
+                    newBlockPos.x, newBlockPos.y, newBlockPos.z, self.selectedBlockType)
 
     def updateKeyMap(self, key, value):
         self.keyMap[key] = value
